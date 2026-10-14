@@ -1,65 +1,82 @@
-const spotImage = document.getElementById("spotImage");
-const spotName = document.getElementById("spotName");
+//=====================================
+// FRONT-END — Consome nossa API local
+//=====================================
+
+// ELEMENTOS DO HTML
+const dogImage = document.getElementById("dogImage");
+const breedName = document.getElementById("breedName");
 const randomBtn = document.getElementById("randomBtn");
 const searchBtn = document.getElementById("searchBtn");
-const spotInput = document.getElementById("spotInput");
-const spotArea = document.querySelector(".spot-area");
+const breedInput = document.getElementById("breedInput");
+const dogArea = document.querySelector(".dog-area");
 
-const API = "/api/pontos";
+// URL DA API NODE.JS
+const API = "http://localhost:3000/api/pontos";
 
-async function buscarPonto(endpoint) {
-  if (spotArea) spotArea.classList.add("loading");
+// FUNÇÃO PRINCIPAL
+async function buscarPontoTuristico(url) {
+  dogArea.classList.add("loading");
 
   try {
-    const response = await fetch(endpoint);
+    const response = await fetch(url);
     const data = await response.json();
+    console.log("Resposta da API:", data);
 
-    if (data.status === "error" || !data.message) {
-      if (spotName) spotName.textContent = data.message || "Não encontrado";
+    if (data.status === "error") {
+      breedName.textContent = data.message;
+      dogImage.src = "";
       return;
     }
 
-    spotImage.src = data.message;
+    // Coloca a imagem no elemento <img>
+    dogImage.src = data.message;
 
+    // Extrai o nome do ponto da URL
     const partes = data.message.split("/");
-    const nomeCategoria = partes[partes.length - 2];
-    if (spotName) {
-      spotName.textContent = nomeCategoria.replace("-", " ").toUpperCase();
+    const ponto = partes[4];
+
+    if (ponto) {
+      const nomeFormatado = ponto.replace("-", " ");
+      breedName.textContent = nomeFormatado.charAt(0).toUpperCase() + nomeFormatado.slice(1);
+    } else {
+      breedName.textContent = "";
     }
 
   } catch (erro) {
     console.error(erro);
-    if (spotName) spotName.textContent = "Erro ao conectar com a API";
+    breedName.textContent = "📴 servidor offline - rode: node server.js";
+    dogImage.src = "";
   } finally {
-    if (spotArea) spotArea.classList.remove("loading");
+    dogArea.classList.remove("loading");
   }
 }
 
+// AÇÕES
 function pontoAleatorio() {
-  buscarPonto(`${API}/aleatorio`);
+  buscarPontoTuristico(`${API}/aleatorio`);
 }
 
 function buscarPorCategoria() {
-  const categoria = spotInput.value.trim().toLowerCase();
+  const categoria = breedInput.value.trim().toLowerCase();
 
   if (!categoria) {
-    alert("Digite um ponto turístico!");
+    alert("Digite o nome de um ponto turístico!");
     return;
   }
 
-  buscarPonto(`${API}/${categoria}`);
+  buscarPontoTuristico(`${API}/${categoria}`);
 }
 
-if (randomBtn) randomBtn.addEventListener("click", pontoAleatorio);
-if (searchBtn) searchBtn.addEventListener("click", buscarPorCategoria);
-if (spotImage) spotImage.addEventListener("click", pontoAleatorio);
+// EVENTOS
+randomBtn.addEventListener("click", pontoAleatorio);
+searchBtn.addEventListener("click", buscarPorCategoria);
+dogImage.addEventListener("click", pontoAleatorio);
 
-if (spotInput) {
-  spotInput.addEventListener("keypress", (event) => {
-    if (event.key === "Enter") {
-      buscarPorCategoria();
-    }
-  });
-}
+breedInput.addEventListener("keypress", (event) => {
+  if (event.key === "Enter") {
+    buscarPorCategoria();
+  }
+});
 
+// Carrega o primeiro ao abrir
 pontoAleatorio();
